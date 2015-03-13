@@ -1019,10 +1019,7 @@ private class CoreTask : TaskFiber {
 			m_yielders ~= caller;
 		} else assert(Thread.getThis() is this.thread, "Joining tasks in different threads is not yet supported.");
 		auto run_count = m_taskCounter;
-		if (m_running && run_count == m_taskCounter) {
-			s_core.resumeTask(this.task);
-			while (m_running && run_count == m_taskCounter) rawYield();
-		}
+		while (m_running && run_count == m_taskCounter) rawYield();
 	}
 
 	override void interrupt()
@@ -1078,7 +1075,26 @@ private class VibeDriverCore : DriverCore {
 
 	void resumeTask(Task task, Exception event_exception = null)
 	{
+		assert(Task.getThis() == Task.init, "Calling resumeTask from another task.");
 		resumeTask(task, event_exception, false);
+	}
+
+	void yieldAndResumeTask(Task task, Exception event_exception = null)
+	{
+		auto thisct = CoreTask.getThis();
+
+		if (thisct is null || thisct == CoreTask.ms_coreTask) {
+			resumeTask(task, event_exception);
+			return;
+		}
+
+		auto otherct = cast(CoreTask)task.fiber;
+		assert(!thisct || otherct.thread == thisct.thread, "Resuming task in foreign thread.");
+		assert(otherct.state == Fiber.State.HOLD, "Resuming fiber that is not on HOLD.");
+
+		if (event_exception) otherct.m_exception = event_exception;
+		if (!otherct.m_queue) s_yieldedTasks.insertBack(otherct);
+		yield();
 	}
 
 	void resumeTask(Task task, Exception event_exception, bool initial_resume)
@@ -1606,8 +1622,8 @@ private struct CoreTaskQueue {
 
 	void insertBack(CoreTask task)
 	{
-		assert(task.m_queue == null);
-		assert(task.m_nextInQueue is null);
+		assert(task.m_queue == null, "Task is already scheduled to be resumed!");
+		assert(task.m_nextInQueue is null, "Task has m_nextInQueue set without being in a queue!?");
 		task.m_queue = &this;
 		if (empty)
 			first = task;
@@ -1652,6 +1668,6 @@ private template needsMove(T)
 version(VibeLibasyncDriver) {
 	shared static ~this() {
 		import libasync.threads : destroyAsyncThreads;
-		destroyAsyncThreads(); // destroy threads		
+		destroyAsyncThreads(); // destroy threads
 	}
 }
