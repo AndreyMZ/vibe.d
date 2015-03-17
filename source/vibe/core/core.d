@@ -1019,6 +1019,7 @@ private class CoreTask : TaskFiber {
 			m_yielders ~= caller;
 		} else assert(Thread.getThis() is this.thread, "Joining tasks in different threads is not yet supported.");
 		auto run_count = m_taskCounter;
+		if (caller == Task.init) s_core.resumeTask(this.task);
 		while (m_running && run_count == m_taskCounter) rawYield();
 	}
 
