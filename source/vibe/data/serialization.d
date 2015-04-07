@@ -106,7 +106,10 @@ import std.typetuple;
 	The serializer must have a value result for the first form
 	to work. Otherwise, use the range based form.
 
-	See_Also: vibe.data.json.JsonSerializer, vibe.data.json.JsonStringSerializer, vibe.data.bson.BsonSerializer
+	See_Also:
+		`vibe.data.json.serializeToJson`, `vibe.data.json.serializeToJsonString`,
+		`vibe.data.bson.serializeToBson`, `vibe.data.json.JsonSerializer`,
+		`vibe.data.json.JsonStringSerializer`, `vibe.data.bson.BsonSerializer`
 */
 auto serialize(Serializer, T, ARGS...)(T value, ARGS args)
 {
@@ -179,7 +182,7 @@ version (unittest)
 		string toRepresentation(T value) {
 			return to!string(value.x) ~ "x" ~ to!string(value.y);
 		}
-		
+
 		T fromRepresentation(string value) {
 			string[] fields = value.split('x');
 			alias fieldT = typeof(T.x);
@@ -216,7 +219,10 @@ unittest {
 	serialized_data can be either an input range or a value containing
 	the serialized data, depending on the type of serializer used.
 
-	See_Also: vibe.data.json.JsonSerializer, vibe.data.json.JsonStringSerializer, vibe.data.bson.BsonSerializer
+	See_Also:
+		`vibe.data.json.deserializeJson`, `vibe.data.bson.deserializeBson`,
+		`vibe.data.json.JsonSerializer`, `vibe.data.json.JsonStringSerializer`,
+		`vibe.data.bson.BsonSerializer`
 */
 T deserialize(Serializer, T, ARGS...)(ARGS args)
 {
@@ -259,7 +265,7 @@ T deserializeWithPolicy(Serializer, alias Policy, T, ARGS...)(ARGS args)
 ///
 unittest {
 	import vibe.data.json;
-	
+
 	static struct SizeI {
 		int x;
 		int y;
@@ -269,7 +275,7 @@ unittest {
 	SizeI sizeI = deserializeWithPolicy!(JsonSerializer, SizePol, SizeI)(serializedI);
 	assert(sizeI.x == 1);
 	assert(sizeI.y == 2);
-	
+
 	static struct SizeF {
 		float x;
 		float y;
@@ -792,22 +798,22 @@ private template DefaultPolicy(T)
 */
 template isPolicySerializable(alias Policy, T)
 {
-	enum bool isPolicySerializable = is(typeof(Policy!T.toRepresentation(T.init))) && 
+	enum bool isPolicySerializable = is(typeof(Policy!T.toRepresentation(T.init))) &&
 		is(typeof(Policy!T.fromRepresentation(Policy!T.toRepresentation(T.init))) == T);
 }
 ///
 unittest {
 	import std.conv;
-	
+
 	// represented as a string when serialized
 	static struct S {
 		int value;
-		
+
 		// dummy example implementations
 		string toString() const { return value.to!string(); }
 		static S fromString(string s) { return S(s.to!int()); }
 	}
-	
+
 	static assert(isStringSerializable!S);
 }
 
@@ -819,7 +825,7 @@ unittest {
 	functions. Policies are evaluated left-to-right according to
 	$(D isPolicySerializable).
 
-	See_Also: vibe.data.serialization.serializeWithPolicy 
+	See_Also: vibe.data.serialization.serializeWithPolicy
 */
 template ChainedPolicy(alias Primary, Fallbacks...)
 {
@@ -832,7 +838,7 @@ template ChainedPolicy(alias Primary, Fallbacks...)
 ///
 unittest {
 	import std.conv;
-	
+
 	// To be represented as the boxed value when serialized
 	static struct Box(T) {
 		T value;
@@ -850,7 +856,7 @@ unittest {
 		auto toRepresentation(S s) {
 			return s.value;
 		}
-		
+
 		S fromRepresentation(typeof(toRepresentation(S.init)) v) {
 			return S(v);
 		}
@@ -860,7 +866,7 @@ unittest {
 		auto toRepresentation(S s) {
 			return s.get();
 		}
-		
+
 		S fromRepresentation(typeof(toRepresentation(S.init)) v) {
 			S s;
 			s.get() = v;
