@@ -281,32 +281,13 @@ template render(string diet_file, ALIASES...) {
 /**
 	Redirects to the given URL.
 
-	The URL may either be a full URL, including the protocol and server
-	portion, or it may be the local part of the URI (the path and an
-	optional query string). Finally, it may also be a relative path that is
-	combined with the path of the current request to yield an absolute
-	path.
-
 	Note that this may only be called from a function/method
 	registered using registerWebInterface.
 */
 void redirect(string url)
 {
-	import std.algorithm : canFind, startsWith;
-
-	assert(s_requestContext.req !is null, "redirect() used outside of a web interface request!");
-	alias ctx = s_requestContext;
-	URL fullurl;
-	if (url.startsWith("/")) {
-		fullurl = ctx.req.fullURL;
-		fullurl.localURI = url;
-	} else if (url.canFind(":")) { // TODO: better URL recognition
-		fullurl = URL(url);
-	} else {
-		if (ctx.req.fullURL.path.endsWithSlash) fullurl = ctx.req.fullURL ~ Path(url);
-		else fullurl = ctx.req.fullURL.parentURL ~ Path(url);
-	}
-	ctx.res.redirect(fullurl);
+	assert(s_requestContext.res !is null, "redirect() used outside of a web interface request!");
+	s_requestContext.res.redirect(url);
 }
 
 
