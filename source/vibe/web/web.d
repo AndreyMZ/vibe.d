@@ -289,6 +289,12 @@ void redirect(string url)
 	assert(s_requestContext.res !is null, "redirect() used outside of a web interface request!");
 	s_requestContext.res.redirect(url);
 }
+/// ditto
+void redirect(URL url)
+{
+	assert(s_requestContext.res !is null, "redirect() used outside of a web interface request!");
+	s_requestContext.res.redirect(url);
+}
 
 
 /**
