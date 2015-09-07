@@ -279,6 +279,32 @@ template render(string diet_file, ALIASES...) {
 
 
 /**
+	Get HTTPServerRequest object.
+
+	Note that this may only be called from a function/method
+	registered using registerWebInterface.
+*/
+HTTPServerRequest getHTTPServerRequest()
+{
+	assert(s_requestContext.req !is null, "getHTTPServerRequest() used outside of a web interface request!");
+	return s_requestContext.req;
+}
+
+
+/**
+	Get HTTPServerResponse object.
+
+	Note that this may only be called from a function/method
+	registered using registerWebInterface.
+*/
+HTTPServerResponse getHTTPServerResponse()
+{
+	assert(s_requestContext.res !is null, "getHTTPServerResponse() used outside of a web interface request!");
+	return s_requestContext.res;
+}
+
+
+/**
 	Redirects to the given URL.
 
 	Note that this may only be called from a function/method
